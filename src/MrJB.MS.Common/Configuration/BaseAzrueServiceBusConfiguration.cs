@@ -1,9 +1,7 @@
 ﻿namespace MrJB.MS.Common.Configuration;
-    
-public class AzureServiceBusConfiguration
-{
-    public const string Position = "AzureServiceBus";
 
+public abstract class BaseAzrueServiceBusConfiguration
+{
     public string ConnectionString { get; set; }
 
     public string QueueOrTopic { get; set; }

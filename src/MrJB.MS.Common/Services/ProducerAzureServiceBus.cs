@@ -9,9 +9,9 @@ public class ProducerAzureServiceBus : IProducerService
     ILogger<ProducerAzureServiceBus> _logger;
 
     // configuration
-    AzureServiceBusConfiguration _azureServiceBusConfiguration;
+    AzureServiceBusConsumerConfiguration _azureServiceBusConfiguration;
 
-    public ProducerAzureServiceBus(ILogger<ProducerAzureServiceBus> logger, AzureServiceBusConfiguration azureServiceBusConfiguration)
+    public ProducerAzureServiceBus(ILogger<ProducerAzureServiceBus> logger, AzureServiceBusConsumerConfiguration azureServiceBusConfiguration)
     {
         _logger = logger;
         _azureServiceBusConfiguration = azureServiceBusConfiguration;
