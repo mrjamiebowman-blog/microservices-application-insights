@@ -7,12 +7,6 @@ namespace MrJB.MS.Common.Extensions;
 
 public static class AzureServiceBusExtensions
 {
-    public static IServiceCollection AddCustomAzureServiceBus(this IServiceCollection services)
-    {
-
-        return services;
-    }
-
     public static IServiceCollection AddAzureServiceBusConsumerConfiguration(this IServiceCollection services, IConfiguration config)
     {
         // consumer configuration

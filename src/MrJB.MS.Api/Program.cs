@@ -1,3 +1,5 @@
+using MrJB.MS.Common.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -10,7 +12,6 @@ builder.Services.AddSwaggerGen();
 // services
 
 builder.Services
-    .AddCustomAzureServiceBus()
     .AddAzureServiceBusProducerConfiguration(builder.Configuration);
 
 var app = builder.Build();
