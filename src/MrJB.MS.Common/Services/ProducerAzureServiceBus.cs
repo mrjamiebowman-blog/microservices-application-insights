@@ -68,7 +68,7 @@ public class ProducerAzureServiceBus : IProducerService
             _logger.LogError($"ProducerAzureServiceBus->ProduceAsync(queue: ({queue}), operationId: ({operationId}), parentId: ({parentId}), Data: ({jsonData}).");
             _telemetryClient.TrackException(ex, new Dictionary<string, string> { { "Message", JsonSerializer.Serialize(data, JsonSerializerHelper.Message) } });
             operation.Telemetry.Success = false;
-        throw;
+            throw;
         }
         finally
         {

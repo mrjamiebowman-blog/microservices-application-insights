@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 // services
 
 builder.Services
+    .AddCustomApplicationInsightsApi(builder.Configuration)
     .AddAzureServiceBusProducerConfiguration(builder.Configuration);
 
 var app = builder.Build();
@@ -24,9 +25,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

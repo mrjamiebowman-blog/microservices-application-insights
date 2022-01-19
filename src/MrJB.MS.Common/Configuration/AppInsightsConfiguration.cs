@@ -2,5 +2,7 @@
     
 public class AppInsightsConfiguration
 {
-    public string ConnectionString { get; set; }
+    public const string Position = "ApplicationInsights";
+
+    public string InstrumentationKey { get; set; }
 }
