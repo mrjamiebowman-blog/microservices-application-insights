@@ -20,6 +20,7 @@ public class ProducerAzureServiceBus : IProducerService
     public ProducerAzureServiceBus(ILogger<ProducerAzureServiceBus> logger, TelemetryClient telemetryClient, AzureServiceBusProducerConfiguration azureServiceBusConfiguration)
     {
         _logger = logger;
+        _telemetryClient = telemetryClient;
         _azureServiceBusConfiguration = azureServiceBusConfiguration;
     }
 

@@ -1,3 +1,5 @@
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
+using MrJB.MS.Common.Configuration;
 using MrJB.MS.Common.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,12 +7,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// services
+// app insights
+var options = new ApplicationInsightsServiceOptions();
+options.EnableHeartbeat = true;
+options.InstrumentationKey = builder.Configuration.GetValue<string>($"{AppInsightsConfiguration.Position}:{nameof(AppInsightsConfiguration.InstrumentationKey)}");
+builder.Services.AddApplicationInsightsTelemetry(options);
 
+// services
 builder.Services
     .AddCustomApplicationInsightsApi(builder.Configuration)
     .AddAzureServiceBusProducerConfiguration(builder.Configuration);

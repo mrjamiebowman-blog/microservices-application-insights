@@ -5,7 +5,7 @@ using MrJB.MS.Common.Services;
 
 namespace MrJB.MS.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/order")]
     [ApiController]
     public class OrderController : ControllerBase
     {
