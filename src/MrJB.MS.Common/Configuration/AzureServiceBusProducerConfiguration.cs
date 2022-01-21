@@ -3,5 +3,4 @@
 public class AzureServiceBusProducerConfiguration : BaseAzrueServiceBusConfiguration
 {
     public const string Position = "AzureServiceBus:Producer";
-
 }

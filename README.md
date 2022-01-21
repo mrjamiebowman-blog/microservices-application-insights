@@ -23,4 +23,15 @@ In Azure you will need to have set up Application Insights and Azure Service Bus
 
 Azure Service Bus (Topic / Subscription)
 * topic1 / Consumer2
-* topic2 / Consumer3ciscoc
+* topic2 / Consumer3
+
+## Configuration (appSettings.json)
+
+#### API
+
+#### Consumer #1
+
+#### Consumer #2
+
+#### Consumer #3
+

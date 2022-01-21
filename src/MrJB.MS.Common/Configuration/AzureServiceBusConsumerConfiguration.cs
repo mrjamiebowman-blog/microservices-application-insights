@@ -4,4 +4,5 @@ public class AzureServiceBusConsumerConfiguration : BaseAzrueServiceBusConfigura
 {
     public const string Position = "AzureServiceBus:Consumer";
 
+    public string SubscriptionName { get; set; }
 }

@@ -1,20 +1,28 @@
+using MrJB.MS.Common.Services;
+
 namespace MrJB.MS.Consumer1;
 
-public class Worker : BackgroundService
+public class Worker : IHostedService
 {
     private readonly ILogger<Worker> _logger;
+    private readonly IApplicationLifetime _lifetime;
 
-    public Worker(ILogger<Worker> logger)
+    private readonly IConsumerService _consumerService;
+
+    public Worker(ILogger<Worker> logger, IApplicationLifetime lifetime, IConsumerService consumerService)
     {
         _logger = logger;
+        _lifetime = lifetime;
+        _consumerService = consumerService;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            await Task.Delay(1000, stoppingToken);
-        }
+        return _consumerService.StartConsumingAsync(cancellationToken);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return _consumerService.StopConsumingAsync(cancellationToken);
     }
 }

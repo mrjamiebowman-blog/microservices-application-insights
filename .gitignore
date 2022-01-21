@@ -13,6 +13,8 @@
 # appsettings
 **/appSettings.json
 **/appSettings.*.json
+**/appsettings.json
+**/appsettings.*.json
 
 # launchsettings
 **/launchSettings.json

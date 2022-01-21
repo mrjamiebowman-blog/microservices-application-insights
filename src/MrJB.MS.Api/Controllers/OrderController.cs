@@ -25,6 +25,12 @@ namespace MrJB.MS.Api.Controllers
             _producerService = producerService;
         }
 
+        /// <summary>
+        /// Hypothetical Situation: this API will receive order information from an external system.
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         [HttpPost("create")]
         public Task CreateOrderAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -32,9 +38,10 @@ namespace MrJB.MS.Api.Controllers
             {
                 // create order
                 var order = new Order();
-                order.Subtotal = 100;
-                order.Tax = 20;
-                order.Total = 120;
+                order.OrderId = new Random().Next(1, 1000);
+                order.Subtotal = new Random().Next(100, 500); ;
+                order.Tax = order.Subtotal * 0.07M;
+                order.Total = order.Subtotal + order.Tax;
 
                 // billing address
                 order.BillingAddress = new CustomerAddress() {
