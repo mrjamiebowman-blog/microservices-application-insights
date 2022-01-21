@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MrJB.MS.Common.ApplicationInsights;
+using MrJB.MS.Common.ApplicationInsights.Filters;
 using MrJB.MS.Common.Configuration;
 
 namespace MrJB.MS.Common.Extensions
@@ -16,9 +17,6 @@ namespace MrJB.MS.Common.Extensions
 
             // telemetry initializer
             services.AddSingleton<ITelemetryInitializer>(new TelemetryInitializer(config.RoleName));
-
-            // filters
-            //services.AddApplicationINsightsTelemetryProcessor<TelemetryFilterProcessor>();
 
             return services;
         }

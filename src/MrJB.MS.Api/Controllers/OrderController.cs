@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.AspNetCore.Mvc;
 using MrJB.MS.Common.Configuration;
 using MrJB.MS.Common.Models;
 using MrJB.MS.Common.Services;
+using System.Diagnostics;
 
 namespace MrJB.MS.Api.Controllers
 {
@@ -11,6 +14,7 @@ namespace MrJB.MS.Api.Controllers
     {
         // logging
         private readonly ILogger<OrderController> _logger;
+        private readonly TelemetryClient _telemetryClient;
 
         // configuration
         private readonly AzureServiceBusProducerConfiguration _azureServiceBusProducerConfiguration;
@@ -18,9 +22,10 @@ namespace MrJB.MS.Api.Controllers
         // service
         private readonly IProducerService _producerService;
 
-        public OrderController(ILogger<OrderController> logger, AzureServiceBusProducerConfiguration azureServiceBusProducerConfiguration, IProducerService producerService)
+        public OrderController(ILogger<OrderController> logger, TelemetryClient telemetryClient, AzureServiceBusProducerConfiguration azureServiceBusProducerConfiguration, IProducerService producerService)
         {
             _logger = logger;
+            _telemetryClient = telemetryClient;
             _azureServiceBusProducerConfiguration = azureServiceBusProducerConfiguration;
             _producerService = producerService;
         }
@@ -67,8 +72,16 @@ namespace MrJB.MS.Api.Controllers
                     PostalCode = "12345"
                 };
 
+                // start activity
+                var activity = new Activity("Orders API");
+                using var operation = _telemetryClient.StartOperation<RequestTelemetry>("Orders API", activity.RootId, activity.ParentId);
+
+                // root operation id and parent id
+                var rootOperationId = operation.Telemetry.Context.Operation.Id;
+                var parentId = operation.Telemetry.Id;
+
                 // post to service
-                _producerService.ProduceAsync(order, _azureServiceBusProducerConfiguration.QueueOrTopic, "", "", cancellationToken);
+                _producerService.ProduceAsync(order, _azureServiceBusProducerConfiguration.QueueOrTopic, rootOperationId, parentId, cancellationToken);
 
                 return Task.CompletedTask;
             } catch (Exception ex) {
