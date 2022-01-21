@@ -38,8 +38,7 @@ public class Worker : IHostedService
     private async Task ProcessMessage(string message, string operationId, string parentId, CancellationToken cancellationToken)
     {
         // serialize message
-        var serializerOptions = new JsonSerializerOptions
-        {
+        var serializerOptions = new JsonSerializerOptions {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
         var order = JsonSerializer.Deserialize<Order>(message, serializerOptions);

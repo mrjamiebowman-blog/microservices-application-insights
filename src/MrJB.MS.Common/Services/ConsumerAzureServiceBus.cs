@@ -2,6 +2,7 @@
 using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Logging;
 using MrJB.MS.Common.Configuration;
+using MrJB.MS.Common.Extensions;
 
 namespace MrJB.MS.Common.Services;
 
@@ -96,6 +97,7 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
         var body = args.Message.Body.ToString();
 
         // extract root operation id and parent id
+        (var rootOperationId, var parentId) = args.Message.GetCorrelationIds();
 
         // log information
         _logger.LogInformation($"Received Message (queueOrTopic: ({_azureServiceBusConfiguration.QueueOrTopic}), subscriptionName: ({_azureServiceBusConfiguration.SubscriptionName}).");
@@ -103,7 +105,7 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
 
         // process message
         if (ProcessMessageAsync != null) { 
-            await ProcessMessageAsync?.Invoke(body, "", "", _cancellationToken);
+            await ProcessMessageAsync?.Invoke(body, rootOperationId, parentId, _cancellationToken);
         }
 
         // we can evaluate application logic and use that to determine how to settle the message.

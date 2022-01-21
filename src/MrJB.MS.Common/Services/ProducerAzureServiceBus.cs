@@ -3,6 +3,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Logging;
 using MrJB.MS.Common.Configuration;
+using MrJB.MS.Common.Extensions;
 using MrJB.MS.Common.Helpers;
 using System.Text.Json;
 
@@ -46,16 +47,14 @@ public class ProducerAzureServiceBus : IProducerService
             ServiceBusSender sender = serviceBusClient.CreateSender(queue);
 
             // json
-            var serializerOptions = new JsonSerializerOptions
-            {
+            var serializerOptions = new JsonSerializerOptions {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
             var json = JsonSerializer.Serialize(data, serializerOptions);
 
             // create a message that we can send
             ServiceBusMessage message = new ServiceBusMessage(json);
-            message.ApplicationProperties.Add("OperationId", operation.Telemetry.Context.Operation.Id);
-            message.ApplicationProperties.Add("ParentId", operation.Telemetry.Id);
+            message.SetCorrelationIds(operation.Telemetry.Context.Operation.Id, operation.Telemetry.Id);
 
             // send the message
             await sender.SendMessageAsync(message, cancellationToken);
