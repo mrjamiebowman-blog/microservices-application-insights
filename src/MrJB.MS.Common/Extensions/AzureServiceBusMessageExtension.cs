@@ -13,7 +13,7 @@ namespace MrJB.MS.Common.Extensions
             }
 
             string parentId = string.Empty;
-            if (message.ApplicationProperties.TryGetValue("", out var objParentId))
+            if (message.ApplicationProperties.TryGetValue("ParentId", out var objParentId))
             {
                 parentId = objParentId.ToString();
             }

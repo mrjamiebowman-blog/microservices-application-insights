@@ -30,7 +30,7 @@ namespace MrJB.MS.Common.ApplicationInsights.Filters
             }
 
             // we don't want to ignore failed health checks.
-            if (req != null && (urls.Any(x => !req.Url.LocalPath.ToLower().Contains(x)) && req.Success == true))
+            if (req.Url != null && urls.Any(x => req.Url.LocalPath.ToLower().Contains(x)) && req.Success == true)
             {
                 return;
             }

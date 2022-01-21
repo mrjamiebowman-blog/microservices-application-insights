@@ -37,6 +37,9 @@ public class Worker : IHostedService
     /// </summary>
     private async Task ProcessMessage(string message, string operationId, string parentId, CancellationToken cancellationToken)
     {
+        // log
+        _logger.LogInformation($"Consumer 2: Received Message");
+
         // serialize message
         var serializerOptions = new JsonSerializerOptions
         {
