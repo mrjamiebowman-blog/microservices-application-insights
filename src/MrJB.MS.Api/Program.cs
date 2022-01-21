@@ -1,6 +1,7 @@
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using MrJB.MS.Common.Configuration;
 using MrJB.MS.Common.Extensions;
+using MrJB.MS.Common.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,7 @@ builder.Services.AddApplicationInsightsTelemetry(options);
 
 // services
 builder.Services
+    .AddTransient<IProducerService, ProducerAzureServiceBus>()
     .AddCustomApplicationInsightsApi(builder.Configuration)
     .AddAzureServiceBusProducerConfiguration(builder.Configuration);
 

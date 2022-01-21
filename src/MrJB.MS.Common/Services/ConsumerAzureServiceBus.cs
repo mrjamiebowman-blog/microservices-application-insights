@@ -15,11 +15,37 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
     private ServiceBusProcessor _processor;
     private CancellationToken _cancellationToken;
 
+    // I don't normally do this.
+    public delegate Task MessageReceivedAsync(string message, string operationId, string parentId, CancellationToken cancellationToken);
+    public event IConsumerService.MessageReceivedAsync ProcessMessageAsync;
+
+    // object lock
+    object objectLock = new object();
+
     public ConsumerAzureServiceBus(ILogger<ConsumerAzureServiceBus> logger, TelemetryClient telemetryClient, AzureServiceBusConsumerConfiguration azureServiceBusConsumerConfiguration)
     {
         _logger = logger;
         _telemetryClient = telemetryClient;
         _azureServiceBusConfiguration = azureServiceBusConsumerConfiguration;
+    }
+
+    event IConsumerService.MessageReceivedAsync IConsumerService.ProcessMessageAsync
+    {
+        add
+        {
+            lock (objectLock)
+            {
+                ProcessMessageAsync += value;
+            }
+        }
+
+        remove
+        {
+            lock (objectLock)
+            {
+                ProcessMessageAsync -= value;
+            }
+        }
     }
 
     public void LogStartupInformation()
@@ -69,6 +95,17 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
     {
         var body = args.Message.Body.ToString();
 
+        // extract root operation id and parent id
+
+        // log information
+        _logger.LogInformation($"Received Message (queueOrTopic: ({_azureServiceBusConfiguration.QueueOrTopic}), subscriptionName: ({_azureServiceBusConfiguration.SubscriptionName}).");
+        _logger.LogInformation($"{body}");
+
+        // process message
+        if (ProcessMessageAsync != null) { 
+            await ProcessMessageAsync?.Invoke(body, "", "", _cancellationToken);
+        }
+
         // we can evaluate application logic and use that to determine how to settle the message.
         await args.CompleteMessageAsync(args.Message);
     }
@@ -77,9 +114,7 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
     {
         // the error source tells me at what point in the processing an error occurred
         Console.WriteLine(args.ErrorSource);
-        // the fully qualified namespace is available
         Console.WriteLine(args.FullyQualifiedNamespace);
-        // as well as the entity path
         Console.WriteLine(args.EntityPath);
         Console.WriteLine(args.Exception.ToString());
         return Task.CompletedTask;

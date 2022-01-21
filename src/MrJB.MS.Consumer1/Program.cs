@@ -1,6 +1,7 @@
 using Microsoft.ApplicationInsights.WorkerService;
 using MrJB.MS.Common.Configuration;
 using MrJB.MS.Common.Extensions;
+using MrJB.MS.Common.Services;
 using MrJB.MS.Consumer1;
 
 IHost host = Host.CreateDefaultBuilder(args)
@@ -13,8 +14,11 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddApplicationInsightsTelemetryWorkerService(options);
         services.AddCustomApplicationInsightsWorker(builder.Configuration);
 
-        services.AddAzureServiceBusConsumerConfiguration(builder.Configuration);
-        services.AddAzureServiceBusProducerConfiguration(builder.Configuration);
+        services
+                .AddTransient<IProducerService, ProducerAzureServiceBus>()
+                .AddAzureServiceBusConsumerConfiguration(builder.Configuration)
+                .AddAzureServiceBusProducerConfiguration(builder.Configuration);
+
         services.AddHostedService<Worker>();
     })
     .Build();

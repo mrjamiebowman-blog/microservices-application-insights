@@ -7,7 +7,7 @@ using MrJB.MS.Common.Helpers;
 using System.Text.Json;
 
 namespace MrJB.MS.Common.Services;
-    
+ 
 public class ProducerAzureServiceBus : IProducerService
 {
     // services
