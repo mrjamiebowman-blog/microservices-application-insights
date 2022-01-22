@@ -1,3 +1,5 @@
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using MrJB.MS.Common.Models;
 using MrJB.MS.Common.Services;
 using System.Text.Json;
@@ -7,14 +9,16 @@ namespace MrJB.MS.Consumer3;
 public class Worker : IHostedService
 {
     private readonly ILogger<Worker> _logger;
+    private readonly TelemetryClient _telemetryClient;
     private readonly IApplicationLifetime _lifetime;
 
     // services
     private readonly IConsumerService _consumerService;
 
-    public Worker(ILogger<Worker> logger, IApplicationLifetime lifetime, IConsumerService consumerService)
+    public Worker(ILogger<Worker> logger, TelemetryClient telemetryClient, IApplicationLifetime lifetime, IConsumerService consumerService)
     {
         _logger = logger;
+        _telemetryClient = telemetryClient;
         _lifetime = lifetime;
         _consumerService = consumerService;
     }
@@ -39,6 +43,20 @@ public class Worker : IHostedService
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
         var order = JsonSerializer.Deserialize<Order>(message, serializerOptions);
+
+        // order processed metrics
+        var ordersProcessedMetric = new MetricTelemetry();
+        ordersProcessedMetric.Name = "Orders Processed";
+        ordersProcessedMetric.Value = 1;
+        _telemetryClient.TrackMetric(ordersProcessedMetric);
+
+        // event order processed
+        _telemetryClient.TrackEvent("Order Processed", new Dictionary<string, string>
+        {
+            { "OrderID", order.OrderId.ToString() },
+            { "FirstName", order.BillingAddress.FirstName },
+            { "LastName", order.BillingAddress.LastName }
+        });
 
         // process (produce to next service)
         _logger.LogInformation($"Final Message Processed.");

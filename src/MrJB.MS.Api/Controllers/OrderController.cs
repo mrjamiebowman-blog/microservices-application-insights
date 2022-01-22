@@ -80,6 +80,14 @@ namespace MrJB.MS.Api.Controllers
                 var rootOperationId = operation.Telemetry.Context.Operation.Id;
                 var parentId = operation.Telemetry.Id;
 
+                // event order received
+                _telemetryClient.TrackEvent("Order Received", new Dictionary<string, string>
+                {
+                    { "OrderID", order.OrderId.ToString() },
+                    { "FirstName", order.BillingAddress.FirstName },
+                    { "LastName", order.BillingAddress.LastName }
+                });
+
                 // post to service
                 _producerService.ProduceAsync(order, _azureServiceBusProducerConfiguration.QueueOrTopic, rootOperationId, parentId, cancellationToken);
 

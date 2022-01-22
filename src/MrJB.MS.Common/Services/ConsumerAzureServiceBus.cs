@@ -104,11 +104,14 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
         var activity = new Activity("ServiceBusProcessor.ProcessMessage");
         activity.SetParentId(parentId);
 
-        using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("Process", rootOperationId, activity.ParentId))
+        using ( var operation = _telemetryClient.StartOperation<RequestTelemetry>("Process", rootOperationId, activity.ParentId))
         {
             // log information
             _logger.LogInformation($"Received Message (queueOrTopic: ({_azureServiceBusConfiguration.QueueOrTopic}), subscriptionName: ({_azureServiceBusConfiguration.SubscriptionName}).");
             _logger.LogInformation($"{body}");
+
+            // update parent id
+            parentId = operation.Telemetry.Id;
 
             // process message
             if (ProcessMessageAsync != null)
