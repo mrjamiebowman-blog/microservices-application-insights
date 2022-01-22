@@ -1,8 +1,10 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Logging;
 using MrJB.MS.Common.Configuration;
 using MrJB.MS.Common.Extensions;
+using System.Diagnostics;
 
 namespace MrJB.MS.Common.Services;
 
@@ -99,17 +101,24 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
         // extract root operation id and parent id
         (var rootOperationId, var parentId) = args.Message.GetCorrelationIds();
 
-        // log information
-        _logger.LogInformation($"Received Message (queueOrTopic: ({_azureServiceBusConfiguration.QueueOrTopic}), subscriptionName: ({_azureServiceBusConfiguration.SubscriptionName}).");
-        _logger.LogInformation($"{body}");
+        var activity = new Activity("ServiceBusProcessor.ProcessMessage");
+        activity.SetParentId(parentId);
 
-        // process message
-        if (ProcessMessageAsync != null) { 
-            await ProcessMessageAsync?.Invoke(body, rootOperationId, parentId, _cancellationToken);
+        using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("Process", rootOperationId, activity.ParentId))
+        {
+            // log information
+            _logger.LogInformation($"Received Message (queueOrTopic: ({_azureServiceBusConfiguration.QueueOrTopic}), subscriptionName: ({_azureServiceBusConfiguration.SubscriptionName}).");
+            _logger.LogInformation($"{body}");
+
+            // process message
+            if (ProcessMessageAsync != null)
+            {
+                await ProcessMessageAsync?.Invoke(body, rootOperationId, parentId, _cancellationToken);
+            }
+
+            // we can evaluate application logic and use that to determine how to settle the message.
+            await args.CompleteMessageAsync(args.Message);
         }
-
-        // we can evaluate application logic and use that to determine how to settle the message.
-        await args.CompleteMessageAsync(args.Message);
     }
 
     public Task ErrorHandler(ProcessErrorEventArgs args)

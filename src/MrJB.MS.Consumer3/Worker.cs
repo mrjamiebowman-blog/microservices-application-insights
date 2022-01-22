@@ -41,7 +41,7 @@ public class Worker : IHostedService
         var order = JsonSerializer.Deserialize<Order>(message, serializerOptions);
 
         // process (produce to next service)
-        _logger.LogInformation($"Final Message Received.");
+        _logger.LogInformation($"Final Message Processed.");
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
