@@ -32,7 +32,7 @@ public class ProducerAzureServiceBus : IProducerService
 
     public async Task ProduceAsync<T>(T data, string queue, string operationId, string parentId, CancellationToken cancellationToken)
     {
-        var operation = _telemetryClient.StartOperation<DependencyTelemetry>($"enqueue {queue}");
+        var operation = _telemetryClient.StartOperation<DependencyTelemetry>($"Enqueue {queue}");
         operation.Telemetry.Type = "Azure Service Bus";
         operation.Telemetry.Data = $"Enqueue {queue}";
         operation.Telemetry.Context.Operation.Id = operationId;
@@ -54,15 +54,18 @@ public class ProducerAzureServiceBus : IProducerService
 
             // create a message that we can send
             ServiceBusMessage message = new ServiceBusMessage(json);
-            message.SetCorrelationIds(operation.Telemetry.Context.Operation.Id, operation.Telemetry.Id);
+            message.SetCorrelationIds(operationId, operation.Telemetry.Id);
 
             // send the message
             await sender.SendMessageAsync(message, cancellationToken);
 
             // log event
-            _logger.LogInformation($"Produced data to Queue: ({queue}).", new Dictionary<string, string> { { "Message", JsonSerializer.Serialize<T>(data, JsonSerializerHelper.HumanReadable) } });
+            _logger.LogInformation($"Produced data to Queue: ({queue}), Operation ID: ({operationId}), Parent ID: ({parentId}).", new Dictionary<string, string> { { "Message", JsonSerializer.Serialize<T>(data, JsonSerializerHelper.HumanReadable) } });
 
-        } catch (Exception ex)
+            // success
+            operation.Telemetry.Success = true;
+        }
+        catch (Exception ex)
         {
             var jsonData = JsonSerializer.Serialize(data, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true });
             _logger.LogError($"ProducerAzureServiceBus->ProduceAsync(queue: ({queue}), operationId: ({operationId}), parentId: ({parentId}), Data: ({jsonData}).");

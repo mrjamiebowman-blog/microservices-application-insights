@@ -62,7 +62,7 @@ public class Worker : IHostedService
         _telemetryClient.Flush();
 
         // process (produce to next service)
-        _logger.LogInformation($"Final Message Processed.");
+        _logger.LogInformation($"Final Message Processed. Operation ID: ({operationId}), Parent ID: ({parentId}).");
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

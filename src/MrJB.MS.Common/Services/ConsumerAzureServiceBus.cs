@@ -101,21 +101,17 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
         // extract root operation id and parent id
         (var rootOperationId, var parentId) = args.Message.GetCorrelationIds();
 
-        var activity = new Activity("ServiceBusProcessor.ProcessMessage");
-        activity.SetParentId(parentId);
-
-        using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("Process", rootOperationId, activity.ParentId))
+        using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("ServiceBusProcessor.ProcessMessage", rootOperationId, parentId))
         {
             // log information
-            _logger.LogInformation($"Received Message (queueOrTopic: ({_azureServiceBusConfiguration.QueueOrTopic}), subscriptionName: ({_azureServiceBusConfiguration.SubscriptionName}).");
+            _logger.LogInformation($"Received Message (queueOrTopic: ({_azureServiceBusConfiguration.QueueOrTopic}), subscriptionName: ({_azureServiceBusConfiguration.SubscriptionName}), Operation ID: ({rootOperationId}), Parent ID: ({parentId}).");
             _logger.LogInformation($"{body}");
 
             // update parent id
             parentId = operation.Telemetry.Id;
 
             // process message
-            if (ProcessMessageAsync != null)
-            {
+            if (ProcessMessageAsync != null) {
                 await ProcessMessageAsync?.Invoke(body, rootOperationId, parentId, _cancellationToken);
             }
 

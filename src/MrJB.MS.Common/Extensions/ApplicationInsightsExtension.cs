@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MrJB.MS.Common.ApplicationInsights;
-using MrJB.MS.Common.ApplicationInsights.Filters;
 using MrJB.MS.Common.Configuration;
 
 namespace MrJB.MS.Common.Extensions
@@ -12,8 +11,8 @@ namespace MrJB.MS.Common.Extensions
         public static IServiceCollection AddCustomApplicationInsightsApi(this IServiceCollection services, IConfiguration configuration)
         {
             // configuration
-            AppInsightsConfiguration config = new AppInsightsConfiguration();
-            configuration.GetSection(AppInsightsConfiguration.Position).Bind(config);
+            SettingsConfiguration config = new SettingsConfiguration();
+            configuration.GetSection(SettingsConfiguration.Position).Bind(config);
 
             // telemetry initializer
             services.AddSingleton<ITelemetryInitializer>(new TelemetryInitializer(config.RoleName));
@@ -24,8 +23,8 @@ namespace MrJB.MS.Common.Extensions
         public static IServiceCollection AddCustomApplicationInsightsWorker(this IServiceCollection services, IConfiguration configuration)
         {
             // configuration
-            AppInsightsConfiguration config = new AppInsightsConfiguration();
-            configuration.GetSection(AppInsightsConfiguration.Position).Bind(config);
+            SettingsConfiguration config = new SettingsConfiguration();
+            configuration.GetSection(SettingsConfiguration.Position).Bind(config);
 
             // telemetry initializer
             services.AddSingleton<ITelemetryInitializer>(new TelemetryInitializer(config.RoleName));
