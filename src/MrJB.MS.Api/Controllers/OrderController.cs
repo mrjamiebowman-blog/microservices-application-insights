@@ -37,7 +37,7 @@ namespace MrJB.MS.Api.Controllers
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         [HttpPost("create")]
-        public Task CreateOrderAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task CreateOrderAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             try
             {
@@ -81,17 +81,17 @@ namespace MrJB.MS.Api.Controllers
                 var parentId = operation.Telemetry.Id;
 
                 // event order received
-                _telemetryClient.TrackEvent("Order Received", new Dictionary<string, string>
-                {
+                _telemetryClient.TrackEvent("Order Received", new Dictionary<string, string> {
                     { "OrderID", order.OrderId.ToString() },
                     { "FirstName", order.BillingAddress.FirstName },
                     { "LastName", order.BillingAddress.LastName }
                 });
 
                 // post to service
-                _producerService.ProduceAsync(order, _azureServiceBusProducerConfiguration.QueueOrTopic, rootOperationId, parentId, cancellationToken);
+                await _producerService.ProduceAsync(order, _azureServiceBusProducerConfiguration.QueueOrTopic, rootOperationId, parentId, cancellationToken);
 
-                return Task.CompletedTask;
+                // manually flush (will get to ai faster)
+                _telemetryClient.Flush();
             } catch (Exception ex) {
                 // TODO: return problem details
                 throw new Exception("Unable to Create Order.");

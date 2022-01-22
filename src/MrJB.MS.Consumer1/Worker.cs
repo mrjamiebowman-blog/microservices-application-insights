@@ -1,3 +1,4 @@
+using Microsoft.ApplicationInsights;
 using MrJB.MS.Common.Configuration;
 using MrJB.MS.Common.Models;
 using MrJB.MS.Common.Services;
@@ -8,6 +9,8 @@ namespace MrJB.MS.Consumer1;
 public class Worker : IHostedService
 {
     private readonly ILogger<Worker> _logger;
+    private readonly TelemetryClient _telemetryClient;
+
     private readonly IApplicationLifetime _lifetime;
 
     // services
@@ -17,9 +20,10 @@ public class Worker : IHostedService
     // configuration
     private readonly AzureServiceBusProducerConfiguration _azureServiceBusProducerConfiguration;
 
-    public Worker(ILogger<Worker> logger, IApplicationLifetime lifetime, IConsumerService consumerService, IProducerService producerService, AzureServiceBusProducerConfiguration azureServiceBusProducerConfiguration)
+    public Worker(ILogger<Worker> logger, TelemetryClient telemetryClient, IApplicationLifetime lifetime, IConsumerService consumerService, IProducerService producerService, AzureServiceBusProducerConfiguration azureServiceBusProducerConfiguration)
     {
         _logger = logger;
+        _telemetryClient = telemetryClient;
         _lifetime = lifetime;
         _consumerService = consumerService;
         _producerService = producerService;
@@ -48,6 +52,9 @@ public class Worker : IHostedService
 
         // process (produce to next service)
         await _producerService.ProduceAsync<Order>(order, _azureServiceBusProducerConfiguration.QueueOrTopic, operationId, parentId, cancellationToken);
+
+        // manually flush (will get to ai faster)
+        _telemetryClient.Flush();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

@@ -58,6 +58,9 @@ public class Worker : IHostedService
             { "LastName", order.BillingAddress.LastName }
         });
 
+        // manually flush (will get to ai faster)
+        _telemetryClient.Flush();
+
         // process (produce to next service)
         _logger.LogInformation($"Final Message Processed.");
     }

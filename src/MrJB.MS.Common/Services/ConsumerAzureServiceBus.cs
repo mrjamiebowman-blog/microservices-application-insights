@@ -18,7 +18,7 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
     private ServiceBusProcessor _processor;
     private CancellationToken _cancellationToken;
 
-    // I don't normally do this.
+    // delegates and events for message processing
     public delegate Task MessageReceivedAsync(string message, string operationId, string parentId, CancellationToken cancellationToken);
     public event IConsumerService.MessageReceivedAsync ProcessMessageAsync;
 
@@ -104,7 +104,7 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
         var activity = new Activity("ServiceBusProcessor.ProcessMessage");
         activity.SetParentId(parentId);
 
-        using ( var operation = _telemetryClient.StartOperation<RequestTelemetry>("Process", rootOperationId, activity.ParentId))
+        using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("Process", rootOperationId, activity.ParentId))
         {
             // log information
             _logger.LogInformation($"Received Message (queueOrTopic: ({_azureServiceBusConfiguration.QueueOrTopic}), subscriptionName: ({_azureServiceBusConfiguration.SubscriptionName}).");
@@ -131,6 +131,7 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
         Console.WriteLine(args.FullyQualifiedNamespace);
         Console.WriteLine(args.EntityPath);
         Console.WriteLine(args.Exception.ToString());
+
         return Task.CompletedTask;
     }
 }
