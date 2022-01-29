@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace MrJB.MS.Common.Tests
@@ -133,9 +134,18 @@ namespace MrJB.MS.Common.Tests
             azureServiceBusConsumerConfiguration.QueueOrTopic = "queue-or-topic";
             azureServiceBusConsumerConfiguration.SubscriptionName = "subscription-name";
 
-            // act
-            typeof(ConsumerAzureServiceBus).GetMethod("MessageHandler", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(new ConsumerAzureServiceBus(logger, telemetryClient, azureServiceBusConsumerConfiguration), new Object[] { processMessageEventArgs });
+            // consumer
+            var consumer = new ConsumerAzureServiceBus(logger, telemetryClient, azureServiceBusConsumerConfiguration);
 
+            consumer.ProcessMessageAsync += (string message, string operationId, string parentId, CancellationToken cancellationToken) =>
+            {
+                // assertions
+
+                return Task.CompletedTask;
+            };
+
+            // act
+            typeof(ConsumerAzureServiceBus).GetMethod("MessageHandler", BindingFlags.Public | BindingFlags.Instance).Invoke(consumer, new Object[] { processMessageEventArgs }); ;
         }
 
         [Fact]
