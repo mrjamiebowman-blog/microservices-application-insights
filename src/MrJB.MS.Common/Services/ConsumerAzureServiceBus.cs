@@ -4,7 +4,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Logging;
 using MrJB.MS.Common.Configuration;
 using MrJB.MS.Common.Extensions;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MrJB.MS.Common.Services;
 
@@ -32,6 +32,13 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
         _azureServiceBusConfiguration = azureServiceBusConsumerConfiguration;
     }
 
+    /// <summary>
+    /// Note: I typically don't do this since microservices are atomic in design.
+    /// However, for this demo, I will share a common service bus consumer between
+    /// projects. In theory this could be done and would work fine but it creates a
+    /// dependency between the microservices through shared code. This technique
+    /// is something to carefuly consider.
+    /// </summary>
     event IConsumerService.MessageReceivedAsync IConsumerService.ProcessMessageAsync
     {
         add
@@ -62,11 +69,18 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
         return StartReceivingMessagesAsync(_azureServiceBusConfiguration.QueueOrTopic, _azureServiceBusConfiguration.SubscriptionName, cancellationToken);
     }
 
+    [ExcludeFromCodeCoverage]
+    public virtual ServiceBusClient GetServiceBusClient()
+    {
+        return new ServiceBusClient(_azureServiceBusConfiguration.ConnectionString);
+    }
+
     public async Task StartReceivingMessagesAsync(string queueOrTopic, string subscriptionName, CancellationToken cancellationToken)
     {
         try
         {
-            var client = new ServiceBusClient(_azureServiceBusConfiguration.ConnectionString);
+            // get service bus client
+            var client = GetServiceBusClient();
 
             // create a processor
             _processor = client.CreateProcessor(queueOrTopic, subscriptionName, new ServiceBusProcessorOptions());
@@ -96,6 +110,7 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
 
     public async Task MessageHandler(ProcessMessageEventArgs args)
     {
+        // message body
         var body = args.Message.Body.ToString();
 
         // extract root operation id and parent id
