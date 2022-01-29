@@ -35,3 +35,6 @@ Azure Service Bus (Topic / Subscription)
 
 #### Consumer #3
 
+
+## Unit Testing (Moq v4, Reflection)
+I've also included extensive unit testing to cover the Azure Service Bus consumer.  
