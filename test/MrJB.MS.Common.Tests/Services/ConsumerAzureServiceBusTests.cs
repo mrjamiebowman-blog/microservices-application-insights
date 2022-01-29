@@ -33,28 +33,29 @@ namespace MrJB.MS.Common.Tests
             AmqpAnnotatedMessage amqpAnotatedMessage = new AmqpAnnotatedMessage(new AmqpMessageBody(body));
 
             // constructor parameter types
-            Type[] paramTypes = new[]
-            {
+            Type[] paramTypes = new[] {
                 typeof(AmqpAnnotatedMessage)
             };
 
             // create service bus received message
             ServiceBusReceivedMessage serviceBusReceivedMessage =
-                (ServiceBusReceivedMessage)typeof(ServiceBusReceivedMessage).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null)
-                ?.Invoke(new object[] { amqpAnotatedMessage });
+                (ServiceBusReceivedMessage) typeof(ServiceBusReceivedMessage)
+                    .GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, paramTypes, null)
+                        ?.Invoke(new Object[] { amqpAnotatedMessage });
 
             // set delivery count
             var amqpMessage = serviceBusReceivedMessage.GetType()
                                                        .GetProperty("AmqpMessage", BindingFlags.NonPublic | BindingFlags.Instance)
                                                        .GetValue(serviceBusReceivedMessage);
 
+            // message header
             var amqpMessageHeader = amqpMessage.GetType()
-                                                .GetProperty("Header", BindingFlags.NonPublic | BindingFlags.Instance)
-                                                .GetValue(amqpMessage);
+                                               .GetProperty("Header", BindingFlags.Public | BindingFlags.Instance)
+                                               .GetValue(amqpMessage);
 
             // set the delivery count to 1
             uint deliveryCount = 1;
-            amqpMessageHeader.GetType().GetProperty("DeliveryCount", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(amqpMessageHeader, deliveryCount);
+            amqpMessageHeader.GetType().GetProperty("DeliveryCount", BindingFlags.Public | BindingFlags.Instance).SetValue(amqpMessageHeader, deliveryCount);
 
             return serviceBusReceivedMessage;
         }
@@ -133,10 +134,8 @@ namespace MrJB.MS.Common.Tests
             azureServiceBusConsumerConfiguration.SubscriptionName = "subscription-name";
 
             // act
-            Action action = () => typeof(ConsumerAzureServiceBus).GetMethod("MessageHandler", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(new ConsumerAzureServiceBus(logger, telemetryClient, azureServiceBusConsumerConfiguration), new object[] { processMessageEventArgs });
+            typeof(ConsumerAzureServiceBus).GetMethod("MessageHandler", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(new ConsumerAzureServiceBus(logger, telemetryClient, azureServiceBusConsumerConfiguration), new Object[] { processMessageEventArgs });
 
-            // assert
-            //action.Should().NotThrow();
         }
 
         [Fact]
