@@ -142,11 +142,24 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
 
     public Task ErrorHandler(ProcessErrorEventArgs args)
     {
+        var ex = args?.Exception;
+
         // the error source tells me at what point in the processing an error occurred
         Console.WriteLine(args.ErrorSource);
         Console.WriteLine(args.FullyQualifiedNamespace);
         Console.WriteLine(args.EntityPath);
         Console.WriteLine(args.Exception.ToString());
+
+        if (ex is ServiceBusException)
+        {
+            var asbEx = (ServiceBusException)ex;
+
+            if (asbEx.Reason == ServiceBusFailureReason.MessagingEntityNotFound)
+            {
+                // queue or topic does not exist
+                return Task.CompletedTask;
+            }
+        }
 
         return Task.CompletedTask;
     }
