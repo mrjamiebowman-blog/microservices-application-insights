@@ -18,19 +18,7 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
     private ServiceBusProcessor _processor;
     private CancellationToken _cancellationToken;
 
-    // delegates and events for message processing
-    public delegate Task MessageReceivedAsync(string message, string operationId, string parentId, CancellationToken cancellationToken);
-    public event IConsumerService.MessageReceivedAsync ProcessMessageAsync;
-
-    // object lock
-    object objectLock = new object();
-
-    public ConsumerAzureServiceBus(ILogger<ConsumerAzureServiceBus> logger, TelemetryClient telemetryClient, AzureServiceBusConsumerConfiguration azureServiceBusConsumerConfiguration)
-    {
-        _logger = logger;
-        _telemetryClient = telemetryClient;
-        _azureServiceBusConfiguration = azureServiceBusConsumerConfiguration;
-    }
+    #region Event Delegate
 
     /// <summary>
     /// Note: I typically don't do this since microservices are atomic in design.
@@ -39,6 +27,14 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
     /// dependency between the microservices through shared code. This technique
     /// is something to carefuly consider.
     /// </summary>
+
+    // delegates and events for message processing
+    public delegate Task MessageReceivedAsync(string message, string operationId, string parentId, CancellationToken cancellationToken);
+    public event IConsumerService.MessageReceivedAsync ProcessMessageAsync;
+
+    // object lock
+    object objectLock = new object();
+
     event IConsumerService.MessageReceivedAsync IConsumerService.ProcessMessageAsync
     {
         add
@@ -56,6 +52,15 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
                 ProcessMessageAsync -= value;
             }
         }
+    }
+
+    #endregion
+
+    public ConsumerAzureServiceBus(ILogger<ConsumerAzureServiceBus> logger, TelemetryClient telemetryClient, AzureServiceBusConsumerConfiguration azureServiceBusConsumerConfiguration)
+    {
+        _logger = logger;
+        _telemetryClient = telemetryClient;
+        _azureServiceBusConfiguration = azureServiceBusConsumerConfiguration;
     }
 
     public void LogStartupInformation()
