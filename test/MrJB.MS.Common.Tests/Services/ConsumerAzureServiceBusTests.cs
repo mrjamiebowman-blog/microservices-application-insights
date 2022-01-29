@@ -25,7 +25,7 @@ namespace MrJB.MS.Common.Tests
         /// </summary>
         /// <param name="json"></param>
         /// <returns></returns>
-        private ServiceBusReceivedMessage GetServiceBusReceivedMessage(string json)
+        private ServiceBusReceivedMessage GetServiceBusReceivedMessage(string json, List<KeyValuePair<string, object>> applicationProperties = null)
         {
             // read only bytes
             IEnumerable<ReadOnlyMemory<byte>> body = new List<ReadOnlyMemory<byte>>() { new ReadOnlyMemory<byte>(Encoding.UTF8.GetBytes(json)) };
@@ -45,9 +45,16 @@ namespace MrJB.MS.Common.Tests
                         ?.Invoke(new Object[] { amqpAnotatedMessage });
 
             // set delivery count
-            var amqpMessage = serviceBusReceivedMessage.GetType()
+            var amqpMessage = ((AmqpAnnotatedMessage) serviceBusReceivedMessage.GetType()
                                                        .GetProperty("AmqpMessage", BindingFlags.NonPublic | BindingFlags.Instance)
-                                                       .GetValue(serviceBusReceivedMessage);
+                                                       .GetValue(serviceBusReceivedMessage));
+
+            // application properties
+            if (applicationProperties != null && applicationProperties.Count > 0) {
+                foreach (var kvp in applicationProperties) {
+                    amqpMessage.ApplicationProperties.Add(kvp);
+                }
+            }
 
             // message header
             var amqpMessageHeader = amqpMessage.GetType()
@@ -57,6 +64,7 @@ namespace MrJB.MS.Common.Tests
             // set the delivery count to 1
             uint deliveryCount = 1;
             amqpMessageHeader.GetType().GetProperty("DeliveryCount", BindingFlags.Public | BindingFlags.Instance).SetValue(amqpMessageHeader, deliveryCount);
+
 
             return serviceBusReceivedMessage;
         }
@@ -120,7 +128,11 @@ namespace MrJB.MS.Common.Tests
             var mockServiceBusReceiver = new Mock<ServiceBusReceiver>();
 
             // service bus message received
-            var serviceBusReceivedMessage = GetServiceBusReceivedMessage(json);
+            var applicationProperties = new List<KeyValuePair<string, object>>();
+            applicationProperties.Add(new KeyValuePair<string, object>("OperationId", "operation-id-123"));
+            applicationProperties.Add(new KeyValuePair<string, object>("ParentId", "parent-id-123"));
+
+            var serviceBusReceivedMessage = GetServiceBusReceivedMessage(json, applicationProperties);
 
             // proccess event args
             var processMessageEventArgs = new ProcessMessageEventArgs(serviceBusReceivedMessage, mockServiceBusReceiver.Object, cts.Token);
@@ -140,12 +152,16 @@ namespace MrJB.MS.Common.Tests
             consumer.ProcessMessageAsync += (string message, string operationId, string parentId, CancellationToken cancellationToken) =>
             {
                 // assertions
+                operationId.Should().Be("operation-id-123");
+                parentId.Should().Be("parent-id-123");
 
                 return Task.CompletedTask;
             };
 
             // act
-            typeof(ConsumerAzureServiceBus).GetMethod("MessageHandler", BindingFlags.Public | BindingFlags.Instance).Invoke(consumer, new Object[] { processMessageEventArgs }); ;
+            typeof(ConsumerAzureServiceBus).GetMethod("MessageHandler", BindingFlags.Public | BindingFlags.Instance).Invoke(consumer, new Object[] { processMessageEventArgs });
+
+            // assert logging messages.
         }
 
         [Fact]
