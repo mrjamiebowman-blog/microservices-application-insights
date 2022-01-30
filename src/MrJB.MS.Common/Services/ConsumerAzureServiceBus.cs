@@ -144,11 +144,14 @@ public class ConsumerAzureServiceBus : IConsumerService, IConsumerAzureServiceBu
     {
         var ex = args?.Exception;
 
+        // log error
+        _logger.LogError($"ErrorHandler: {args.Exception.Message}");
+
         // the error source tells me at what point in the processing an error occurred
-        Console.WriteLine(args.ErrorSource);
-        Console.WriteLine(args.FullyQualifiedNamespace);
-        Console.WriteLine(args.EntityPath);
-        Console.WriteLine(args.Exception.ToString());
+        _logger.LogInformation(args.ErrorSource.ToString());
+        _logger.LogInformation(args.FullyQualifiedNamespace);
+        _logger.LogInformation(args.EntityPath);
+        _logger.LogInformation(args.Exception.ToString());
 
         if (ex is ServiceBusException)
         {

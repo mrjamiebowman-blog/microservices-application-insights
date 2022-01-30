@@ -19,7 +19,6 @@ namespace MrJB.MS.Common.Tests
 {
     public class ConsumerAzureServiceBusTests
     {
-
         /// <summary>
         /// This private method will instantiate a ServiceBusReceivedMessage using reflection.
         /// </summary>
@@ -127,10 +126,14 @@ namespace MrJB.MS.Common.Tests
             // mock
             var mockServiceBusReceiver = new Mock<ServiceBusReceiver>();
 
+            // vars
+            var rootOperationId = "operation-id-123";
+            var parentId = "parent-id-123";
+
             // service bus message received
             var applicationProperties = new List<KeyValuePair<string, object>>();
-            applicationProperties.Add(new KeyValuePair<string, object>("OperationId", "operation-id-123"));
-            applicationProperties.Add(new KeyValuePair<string, object>("ParentId", "parent-id-123"));
+            applicationProperties.Add(new KeyValuePair<string, object>("OperationId", rootOperationId));
+            applicationProperties.Add(new KeyValuePair<string, object>("ParentId", parentId));
 
             var serviceBusReceivedMessage = GetServiceBusReceivedMessage(json, applicationProperties);
 
@@ -152,8 +155,8 @@ namespace MrJB.MS.Common.Tests
             consumer.ProcessMessageAsync += (string message, string operationId, string parentId, CancellationToken cancellationToken) =>
             {
                 // assertions
-                operationId.Should().Be("operation-id-123");
-                parentId.Should().Be("parent-id-123");
+                operationId.Should().Be(rootOperationId);
+                parentId.Should().Be(parentId);
 
                 return Task.CompletedTask;
             };
@@ -162,11 +165,44 @@ namespace MrJB.MS.Common.Tests
             typeof(ConsumerAzureServiceBus).GetMethod("MessageHandler", BindingFlags.Public | BindingFlags.Instance).Invoke(consumer, new Object[] { processMessageEventArgs });
 
             // assert logging messages.
+
+            var message1 = $"Received Message (queueOrTopic: ({azureServiceBusConsumerConfiguration.QueueOrTopic}), subscriptionName: ({azureServiceBusConsumerConfiguration.SubscriptionName}), Operation ID: ({rootOperationId}), Parent ID: ({parentId}).";
+            var message2 = $"{json}";
+
+            logger.messages.ToString().Should().Contain(message1);
+            logger.messages.ToString().Should().Contain(message2);
         }
 
         [Fact]
         public void ErrorHandlerTests()
         {
+            // arrange
+            CancellationTokenSource cts = new CancellationTokenSource();
+
+            var exception = new Exception("Error message.");
+            ServiceBusErrorSource errorSource = new ServiceBusErrorSource();
+
+            // process error event args
+            var processErrorEventArgs = new ProcessErrorEventArgs(exception, errorSource, "", "", cts.Token);
+
+            // logging
+            var logger = new FakeLogger<ConsumerAzureServiceBus>();
+            var telemetryClient = TelemetryHelper.GetFakeTelemetryClient();
+
+            // configuration
+            var azureServiceBusConsumerConfiguration = new AzureServiceBusConsumerConfiguration();
+            azureServiceBusConsumerConfiguration.QueueOrTopic = "queue-or-topic";
+            azureServiceBusConsumerConfiguration.SubscriptionName = "subscription-name";
+
+            // consumer
+            var consumer = new ConsumerAzureServiceBus(logger, telemetryClient, azureServiceBusConsumerConfiguration);
+
+            typeof(ConsumerAzureServiceBus).GetMethod("ErrorHandler", BindingFlags.Public | BindingFlags.Instance).Invoke(consumer, new Object[] { processErrorEventArgs });
+
+            // assert
+            var messages = logger.messages.ToString();
+
+            messages.Should().Contain($"ErrorHandler: {exception.Message}");
 
         }
     }
