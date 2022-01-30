@@ -1,4 +1,3 @@
-using Azure.Core.Amqp;
 using Azure.Messaging.ServiceBus;
 using FluentAssertions;
 using Moq;
@@ -9,7 +8,6 @@ using MrJB.MS.Common.Tests.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,55 +17,6 @@ namespace MrJB.MS.Common.Tests
 {
     public class ConsumerAzureServiceBusTests
     {
-        /// <summary>
-        /// This private method will instantiate a ServiceBusReceivedMessage using reflection.
-        /// </summary>
-        /// <param name="json"></param>
-        /// <returns></returns>
-        private ServiceBusReceivedMessage GetServiceBusReceivedMessage(string json, List<KeyValuePair<string, object>> applicationProperties = null)
-        {
-            // read only bytes
-            IEnumerable<ReadOnlyMemory<byte>> body = new List<ReadOnlyMemory<byte>>() { new ReadOnlyMemory<byte>(Encoding.UTF8.GetBytes(json)) };
-
-            // amqp message
-            AmqpAnnotatedMessage amqpAnotatedMessage = new AmqpAnnotatedMessage(new AmqpMessageBody(body));
-
-            // constructor parameter types
-            Type[] paramTypes = new[] {
-                typeof(AmqpAnnotatedMessage)
-            };
-
-            // create service bus received message
-            ServiceBusReceivedMessage serviceBusReceivedMessage =
-                (ServiceBusReceivedMessage) typeof(ServiceBusReceivedMessage)
-                    .GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, paramTypes, null)
-                        ?.Invoke(new Object[] { amqpAnotatedMessage });
-
-            // set delivery count
-            var amqpMessage = ((AmqpAnnotatedMessage) serviceBusReceivedMessage.GetType()
-                                                       .GetProperty("AmqpMessage", BindingFlags.NonPublic | BindingFlags.Instance)
-                                                       .GetValue(serviceBusReceivedMessage));
-
-            // application properties
-            if (applicationProperties != null && applicationProperties.Count > 0) {
-                foreach (var kvp in applicationProperties) {
-                    amqpMessage.ApplicationProperties.Add(kvp);
-                }
-            }
-
-            // message header
-            var amqpMessageHeader = amqpMessage.GetType()
-                                               .GetProperty("Header", BindingFlags.Public | BindingFlags.Instance)
-                                               .GetValue(amqpMessage);
-
-            // set the delivery count to 1
-            uint deliveryCount = 1;
-            amqpMessageHeader.GetType().GetProperty("DeliveryCount", BindingFlags.Public | BindingFlags.Instance).SetValue(amqpMessageHeader, deliveryCount);
-
-
-            return serviceBusReceivedMessage;
-        }
-
         /// <summary>
         /// I used this to create the json for the unit tests.
         /// </summary>
@@ -131,11 +80,15 @@ namespace MrJB.MS.Common.Tests
             var parentId = "parent-id-123";
 
             // service bus message received
-            var applicationProperties = new List<KeyValuePair<string, object>>();
-            applicationProperties.Add(new KeyValuePair<string, object>("OperationId", rootOperationId));
-            applicationProperties.Add(new KeyValuePair<string, object>("ParentId", parentId));
+            var applicationProperties = new Dictionary<string, object>();
+            applicationProperties.Add("OperationId", rootOperationId);
+            applicationProperties.Add("ParentId", parentId);
 
-            var serviceBusReceivedMessage = GetServiceBusReceivedMessage(json, applicationProperties);
+            // service bus model factory
+            var serviceBusReceivedMessage = ServiceBusModelFactory.ServiceBusReceivedMessage(
+                    body: BinaryData.FromString(json),
+                    properties: applicationProperties,
+                    deliveryCount: 1);
 
             // proccess event args
             var processMessageEventArgs = new ProcessMessageEventArgs(serviceBusReceivedMessage, mockServiceBusReceiver.Object, cts.Token);
@@ -203,7 +156,6 @@ namespace MrJB.MS.Common.Tests
             var messages = logger.messages.ToString();
 
             messages.Should().Contain($"ErrorHandler: {exception.Message}");
-
         }
     }
 }
